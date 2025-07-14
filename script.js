@@ -1,38 +1,34 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const ramos = document.querySelectorAll(".ramo");
+document.addEventListener('DOMContentLoaded', function () {
+    const ramos = document.querySelectorAll('.ramo');
+    const estado = {};
 
-  // Inicialización: bloquea los ramos que tienen prerrequisitos
-  ramos.forEach(ramo => {
-    const prereqs = ramo.dataset.prereqs?.split(',').filter(Boolean);
-    if (prereqs.length > 0) {
-      ramo.classList.add("bloqueado");
-    }
-  });
-
-  ramos.forEach(ramo => {
-    ramo.addEventListener("click", () => {
-      if (ramo.classList.contains("bloqueado")) return;
-
-      // Alternar estado de aprobación
-      const aprobado = ramo.classList.toggle("aprobado");
-
-      // Revisar si se puede desbloquear otros ramos
-      document.querySelectorAll(".ramo").forEach(destino => {
-        const prereqs = destino.dataset.prereqs?.split(',').filter(Boolean);
-        if (prereqs.length === 0) return;
-
-        const allApproved = prereqs.every(id => {
-          const reqRamo = document.getElementById(id);
-          return reqRamo?.classList.contains("aprobado");
-        });
-
-        if (allApproved) {
-          destino.classList.remove("bloqueado");
-        } else {
-          destino.classList.add("bloqueado");
-          destino.classList.remove("aprobado");
+    // Inicializa el estado y bloquea los ramos con requisitos
+    ramos.forEach(ramo => {
+        const reqs = ramo.dataset.requisitos;
+        if (reqs) {
+            ramo.classList.add('bloqueado');
         }
-      });
+        estado[ramo.id] = false;
     });
-  });
+
+    // Al hacer clic en un ramo
+    ramos.forEach(ramo => {
+        ramo.addEventListener('click', function () {
+            if (ramo.classList.contains('bloqueado') || ramo.classList.contains('aprobado')) return;
+
+            ramo.classList.add('aprobado');
+            estado[ramo.id] = true;
+
+            // Desbloquea los ramos que dependan de este
+            ramos.forEach(otro => {
+                const requisitos = otro.dataset.requisitos ? otro.dataset.requisitos.split(',') : [];
+                if (
+                    requisitos.length > 0 &&
+                    requisitos.every(req => estado[req.trim()])
+                ) {
+                    otro.classList.remove('bloqueado');
+                }
+            });
+        });
+    });
 });
